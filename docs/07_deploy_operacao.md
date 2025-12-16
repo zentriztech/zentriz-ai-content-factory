@@ -1,22 +1,33 @@
 # Deploy e Operação
 
-## Repositório sugerido
+## Estrutura de Repositórios
+
+**Arquitetura Multi-Repositório**: Cada componente do projeto é um repositório separado com prefixo `zsmo-*`. O repositório orquestrador centraliza a documentação e scripts de setup.
+
+**Estrutura local após `./scripts/repo-setup.sh`**:
 - `./docs` (esta documentação)
+- `./scripts` (scripts de setup e utilitários)
 - `./infra` (IaC — Serverless Framework / Terraform)
-- `./services`
-  - `orchestrator` (Step Functions definitions)
-  - `generators` (Python — texto/roteiro/captions)
-  - `render` (Python ou ECS — FFmpeg)
-  - `publishers` (Python — YouTube/LinkedIn/etc.)
-  - `api` (Node.js/TypeScript — API Gateway)
-    - `admin-api` (endpoints para Admin UI)
-    - `webhooks` (callbacks e webhooks)
-  - `blog` (web app do blog público — React + Vite + Material UI + MobX)
-  - `admin-ui` (web app do painel de gerenciamento — React + Vite + Material UI + MobX)
+- `./repos` (repositórios clonados automaticamente)
+  - `./lambdas/py/` (Lambdas Python)
+    - `zsmo-lbda-py-generator` (texto/roteiro/captions)
+    - `zsmo-lbda-py-publisher` (YouTube/LinkedIn/etc.)
+    - `zsmo-lbda-py-render` (FFmpeg — renderização de vídeo)
+    - `zsmo-lbda-py-indexer` (Google Search Console)
+  - `./lambdas/node/` (Lambdas Node.js/TypeScript)
+    - `zsmo-lbda-node-articles` (API de artigos)
+    - `zsmo-lbda-node-admin-api` (endpoints para Admin UI)
+    - `zsmo-lbda-node-webhooks` (callbacks e webhooks)
+  - `./web-apps/` (Aplicações web React)
+    - `zsmo-web-blog` (web app do blog público — React + Vite + Material UI + MobX)
+    - `zsmo-web-admin-ui` (web app do painel de gerenciamento — React + Vite + Material UI + MobX)
+  - `./orchestrator/` (Orquestração)
+    - `zsmo-step-functions` (Step Functions definitions)
+    - `zsmo-eventbridge` (configurações EventBridge — opcional)
 
 **Estrutura dos web apps** (seguir padrão do `zentriz-landpage`):
 ```
-services/[blog|admin-ui]/
+repos/web-apps/zsmo-web-[blog|admin-ui]/
 ├── src/
 │   ├── components/     # Componentes reutilizáveis
 │   ├── pages/          # Componentes de página
@@ -48,15 +59,18 @@ services/[blog|admin-ui]/
   - Exemplos: geradores de conteúdo (texto, roteiro, captions), publishers (YouTube, LinkedIn, etc.), indexação Google Search.
   - Motivo: excelente suporte para processamento de texto, bibliotecas de IA (OpenAI, Anthropic), manipulação de dados, APIs de LLM.
 
-**Estrutura de serviços**:
+**Estrutura de serviços** (repositórios separados):
 ```
-services/
-├── generators/          # Python (processamento de texto/IA)
-├── publishers/          # Python (integrações com APIs externas)
-├── render/             # Python ou ECS (FFmpeg)
-└── api/                # Node.js/TypeScript (API Gateway)
-    ├── admin-api/      # Endpoints para Admin UI
-    └── webhooks/       # Webhooks e callbacks
+repos/lambdas/
+├── py/                  # Python (processamento de texto/IA)
+│   ├── zsmo-lbda-py-generator/    # Geração de conteúdo
+│   ├── zsmo-lbda-py-publisher/    # Integrações com APIs externas
+│   ├── zsmo-lbda-py-render/       # FFmpeg (renderização)
+│   └── zsmo-lbda-py-indexer/      # Google Search Console
+└── node/                # Node.js/TypeScript (API Gateway)
+    ├── zsmo-lbda-node-articles/   # API de artigos
+    ├── zsmo-lbda-node-admin-api/  # Endpoints para Admin UI
+    └── zsmo-lbda-node-webhooks/   # Webhooks e callbacks
 ```
 
 ## Estrutura de domínios e URLs

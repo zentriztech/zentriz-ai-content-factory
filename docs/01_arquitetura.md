@@ -1,4 +1,4 @@
-# Arquitetura (AWS) — Zentriz AI Content Factory
+# Arquitetura (AWS) — ZSMO - Zentriz Social Media Orchestrator
 
 ## Objetivo
 Construir um pipeline diário (ou sob demanda) que:
@@ -120,7 +120,7 @@ Se você gerar conteúdo para mais de um canal/marca, trate como:
 
 ```mermaid
 C4Context
-    title System Context - Zentriz AI Content Factory
+    title System Context - ZSMO - Zentriz Social Media Orchestrator
     
     Person(editor, "Editor/Administrador", "Gerencia calendário editorial, aprova conteúdos gerados e monitora jobs.")
     Person(visitor, "Visitante do Blog", "Acessa e lê matérias publicadas no blog.")

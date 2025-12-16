@@ -1,4 +1,4 @@
-# Zentriz AI Content Factory (Blog + YouTube + Cortes) — Documentação
+# ZSMO - Zentriz Social Media Orchestrator (Blog + YouTube + Cortes) — Documentação
 
 Este pacote descreve um **blueprint completo** (MVP → Escala) para uma ferramenta que:
 - Gera diariamente **matéria do blog** (fonte) + **vídeo completo** (YouTube).
@@ -90,30 +90,57 @@ Este pacote descreve um **blueprint completo** (MVP → Escala) para uma ferrame
 ### Configurações iniciais
 
 #### 1. Repositório e estrutura
-```bash
-# Clone ou crie o repositório
-git clone <repo-url> zentriz-ai-content-factory
-cd zentriz-ai-content-factory
 
-# Estrutura esperada (criar conforme necessário):
-# ./docs/          (esta documentação)
-# ./infra/         (IaC: Serverless Framework ou Terraform)
-# ./services/      (código-fonte dos serviços)
-#   ./orchestrator/
-#   ./generators/
-#   ./render/
-#   ./publishers/
-#   ./blog/        (web app do blog público - React + Vite + Material UI + MobX)
-#     ./src/
-#       ./components/  # Componentes reutilizáveis
-#       ./pages/       # Componentes de página
-#       ./stores/      # Stores MobX
-#       ./services/    # Serviços de API (fetch)
-#       ./utils/       # Utilitários
-#       ./styles/      # Estilos globais (SCSS)
-#   ./admin-ui/    (web app do painel de gerenciamento - React + Vite + MUI + MobX)
-#     ./src/       # Mesma estrutura do blog
+**Arquitetura Multi-Repositório**: O projeto ZSMO utiliza uma arquitetura de múltiplos repositórios, onde cada componente é um repositório separado com prefixo `zsmo-*`. O repositório orquestrador (`zentriz-social-media-orchestrator`) centraliza a documentação, infraestrutura e scripts de setup.
+
+```bash
+# Clone ou crie o repositório orquestrador
+git clone <repo-url> zentriz-social-media-orchestrator
+cd zentriz-social-media-orchestrator
+
+# Execute o script de setup para clonar todos os repositórios relacionados
+./scripts/repo-setup.sh
 ```
+
+**Como funciona o `repo-setup.sh`**:
+- O script detecta automaticamente todos os repositórios GitHub da organização que começam com `zsmo-*`
+- Clona cada repositório na estrutura organizada (`./repos/`)
+- Organiza os repositórios por categoria (lambdas, web-apps, orchestrator)
+- Mantém a estrutura de pastas consistente para facilitar o desenvolvimento
+
+# Estrutura esperada após o setup:
+# ./docs/                    (esta documentação)
+# ./scripts/                 (scripts de setup e utilitários)
+#   ./repo-setup.sh          (clona todos os repositórios zsmo-*)
+# ./infra/                   (IaC: Serverless Framework ou Terraform)
+# ./repos/                   (repositórios clonados automaticamente)
+#   ./lambdas/               (Lambdas agrupadas por linguagem)
+#     ./py/                  (Lambdas Python)
+#       ./zsmo-lbda-py-publisher/     # Publicadores (YouTube, LinkedIn, etc.)
+#       ./zsmo-lbda-py-generator/      # Geradores de conteúdo (texto, roteiro)
+#       ./zsmo-lbda-py-render/        # Renderização de vídeo
+#       ./zsmo-lbda-py-indexer/       # Indexação Google Search Console
+#     ./node/                 (Lambdas Node.js/TypeScript)
+#       ./zsmo-lbda-node-articles/    # API de artigos
+#       ./zsmo-lbda-node-admin-api/   # API Gateway para Admin UI
+#       ./zsmo-lbda-node-webhooks/    # Webhooks e callbacks
+#   ./web-apps/              (Aplicações web React)
+#     ./zsmo-web-blog/       (web app do blog público - React + Vite + Material UI + MobX)
+#       ./src/
+#         ./components/       # Componentes reutilizáveis
+#         ./pages/           # Componentes de página
+#         ./stores/           # Stores MobX
+#         ./services/         # Serviços de API (fetch)
+#         ./utils/            # Utilitários
+#         ./styles/           # Estilos globais (SCSS)
+#     ./zsmo-web-admin-ui/   (web app do painel de gerenciamento - React + Vite + MUI + MobX)
+#       ./src/                # Mesma estrutura do blog
+#   ./orchestrator/          (Orquestração e Step Functions)
+#     ./zsmo-step-functions/ # Definições das Step Functions
+#     ./zsmo-eventbridge/    # Configurações do EventBridge (opcional)
+```
+
+**Nota**: Cada serviço é um repositório separado com prefixo `zsmo-*`. O script `./scripts/repo-setup.sh` detecta e clona automaticamente todos os repositórios que começam com `zsmo-*` e os organiza na estrutura acima.
 
 #### 2. Variáveis de ambiente
 Criar arquivo `.env.example` (e `.env` local) com:
@@ -153,7 +180,7 @@ ADMIN_UI_URL=https://blogeditor.zentriz.com.br
 aws configure
 
 # Criar bucket S3 para assets (se não existir)
-aws s3 mb s3://zentriz-content-factory-assets --region us-east-1
+aws s3 mb s3://zentriz-social-media-orchestrator-assets --region us-east-1
 
 # Criar tabelas DynamoDB (via IaC ou manualmente)
 # Ver estrutura em 03_modelos_dados.md
@@ -184,12 +211,12 @@ aws secretsmanager create-secret \
 
 ```bash
 # Blog
-cd services/blog
+cd repos/web-apps/zsmo-web-blog
 pnpm install
 pnpm dev  # roda em http://localhost:3000 (ou porta configurada)
 
 # Admin UI
-cd services/admin-ui
+cd repos/web-apps/zsmo-web-admin-ui
 pnpm install
 pnpm dev  # roda em http://localhost:3000 (ou porta configurada)
 ```
@@ -213,7 +240,7 @@ pnpm dev  # roda em http://localhost:3000 (ou porta configurada)
 **Lambdas Python**:
 ```bash
 # Instalar dependências
-cd services/generators  # ou publishers, etc.
+cd repos/lambdas/py/zsmo-lbda-py-generator  # ou zsmo-lbda-py-publisher, etc.
 pip install -r requirements.txt
 
 # Teste local (se configurado)
@@ -221,14 +248,14 @@ python -m pytest  # testes unitários
 python src/handler.py  # teste local do handler
 
 # Deploy via Serverless Framework
-cd infra
+cd ../../../../infra
 serverless deploy function -f generators-select-topic
 ```
 
 **Lambdas Node.js/TypeScript**:
 ```bash
 # Instalar dependências
-cd services/api/admin-api
+cd repos/lambdas/node/zsmo-lbda-node-admin-api
 pnpm install
 
 # Build TypeScript
@@ -282,7 +309,7 @@ serverless deploy function -f admin-api
 - [ ] Secrets Manager configurado com credenciais sensíveis.
 - [ ] Repositório GitHub criado e workflows de CI/CD configurados.
 - [ ] **AWS Amplify** configurado para **Admin UI** (`blogeditor.zentriz.com.br`):
-  - App criado no Amplify Console conectado ao repositório GitHub (branch `services/admin-ui`).
+  - App criado no Amplify Console conectado ao repositório GitHub `zsmo-web-admin-ui` (branch `main` ou configurada).
   - Build settings configurados (`pnpm install`, `pnpm build`).
   - Custom domain `blogeditor.zentriz.com.br` configurado no Amplify.
 - [ ] **Blog público** (`blog.zentriz.com.br`) configurado:
@@ -313,7 +340,7 @@ Após configurar o ambiente, seguir `07_deploy_operacao.md` para deploy inicial 
 
 ```mermaid
 mindmap
-  root((Zentriz AI<br/>Content Factory))
+  root((ZSMO<br/>Zentriz Social<br/>Media Orchestrator))
     Web Apps
       Blog Público
         React + Vite + MUI
