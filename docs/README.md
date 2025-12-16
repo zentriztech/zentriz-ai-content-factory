@@ -335,8 +335,6 @@ Após configurar o ambiente, seguir `07_deploy_operacao.md` para deploy inicial 
 - **Observabilidade**: logs estruturados + métricas por etapa + DLQ para falhas.
 
 ---
-> Observação: Este pacote é documentação. Ele não inclui código-fonte. A ideia é você colar isso num repositório e usar (ex.: Cursor) para gerar os módulos seguindo estes contratos.
-
 ## Mapa Mental da Suite ZSMO
 
 ```mermaid
