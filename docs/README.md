@@ -33,6 +33,9 @@ Este pacote descreve um **blueprint completo** (MVP → Escala) para uma ferrame
   - **Fetch API** como preferencial (nativo do browser).
   - **Axios** apenas quando extremamente necessário (ex.: interceptors complexos, cancelamento de requisições).
 - **TypeScript**: sempre usar TypeScript para type safety.
+- **Backend (Lambdas)**:
+  - **Node.js/TypeScript**: para Lambdas expostas via API Gateway (REST APIs, endpoints Admin UI).
+  - **Python**: para Lambdas de processamento (geradores de conteúdo, publishers, indexação Google).
 - **CI/CD**: GitHub Actions para:
   - build/test frontend com `pnpm`.
   - deploy de frontend via **AWS Amplify** (integração com GitHub, build e deploy automático).
@@ -52,9 +55,10 @@ Este pacote descreve um **blueprint completo** (MVP → Escala) para uma ferrame
 
 ### Requisitos de sistema
 - **Sistema operacional**: macOS, Linux ou Windows (WSL2 recomendado para Windows).
-- **Node.js**: versão 18.x ou superior (LTS recomendado).
-- **pnpm**: versão 8.x ou superior (`npm install -g pnpm`).
-- **Python**: versão 3.10 ou superior (para scripts v0 e processamento de vídeo, se necessário).
+- **Node.js**: versão 18.x ou superior (LTS recomendado) — para frontend e Lambdas Node.js/TypeScript.
+- **pnpm**: versão 8.x ou superior (`npm install -g pnpm`) — para projetos Node/React.
+- **Python**: versão 3.10 ou superior — **obrigatório** para Lambdas de processamento (generators, publishers).
+- **pip**: gerenciador de pacotes Python (vem com Python).
 - **Git**: versão 2.30+ para controle de versão.
 
 ### Ferramentas de desenvolvimento
@@ -206,16 +210,37 @@ pnpm dev  # roda em http://localhost:3000 (ou porta configurada)
 - **Estilização**: Material UI `sx` prop + TailwindCSS + SCSS para estilos globais.
 
 #### Backend (Lambdas/Step Functions)
+**Lambdas Python**:
 ```bash
-# Com Serverless Framework
-cd infra
-npm install
-serverless offline  # para testes locais (se configurado)
+# Instalar dependências
+cd services/generators  # ou publishers, etc.
+pip install -r requirements.txt
 
-# Ou rodar Lambdas individualmente
-cd services/generators
-npm install
-node src/index.js  # teste local
+# Teste local (se configurado)
+python -m pytest  # testes unitários
+python src/handler.py  # teste local do handler
+
+# Deploy via Serverless Framework
+cd infra
+serverless deploy function -f generators-select-topic
+```
+
+**Lambdas Node.js/TypeScript**:
+```bash
+# Instalar dependências
+cd services/api/admin-api
+pnpm install
+
+# Build TypeScript
+pnpm build
+
+# Teste local
+pnpm test
+pnpm dev  # se configurado para desenvolvimento local
+
+# Deploy via Serverless Framework
+cd infra
+serverless deploy function -f admin-api
 ```
 
 #### Testes
@@ -234,11 +259,20 @@ node src/index.js  # teste local
 
 **Backend**:
 - GitHub Actions workflows em `.github/workflows/`:
-  - Deploy de Lambdas/Step Functions via Serverless Framework ou Terraform.
+  - **Lambdas Python**: deploy via Serverless Framework (`serverless deploy`).
+    - Instalar dependências Python (`pip install -r requirements.txt`).
+    - Build e package das Lambdas.
+    - Deploy para AWS via Serverless Framework.
+  - **Lambdas Node.js/TypeScript**: deploy via Serverless Framework (`serverless deploy`).
+    - Build TypeScript (`npm run build` ou `pnpm build`).
+    - Deploy para AWS via Serverless Framework.
+  - **Step Functions**: definições deployadas junto com as Lambdas via Serverless Framework.
   - Secrets: usar GitHub Secrets para credenciais (não hardcode).
 
 ### Checklist de setup inicial
-- [ ] Node.js 18+ e pnpm instalados.
+- [ ] Node.js 18+ e pnpm instalados (para frontend e Lambdas Node.js/TypeScript).
+- [ ] Python 3.10+ e pip instalados (para Lambdas Python de processamento).
+- [ ] Serverless Framework instalado (`npm install -g serverless`).
 - [ ] AWS CLI configurado com credenciais válidas.
 - [ ] Conta AWS com permissões IAM adequadas.
 - [ ] Google Search Console configurado e Service Account criado.

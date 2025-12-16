@@ -5,9 +5,12 @@
 - `./infra` (IaC — Serverless Framework / Terraform)
 - `./services`
   - `orchestrator` (Step Functions definitions)
-  - `generators` (texto/roteiro/captions)
-  - `render` (ECS/FFmpeg)
-  - `publishers` (YouTube/LinkedIn/etc.)
+  - `generators` (Python — texto/roteiro/captions)
+  - `render` (Python ou ECS — FFmpeg)
+  - `publishers` (Python — YouTube/LinkedIn/etc.)
+  - `api` (Node.js/TypeScript — API Gateway)
+    - `admin-api` (endpoints para Admin UI)
+    - `webhooks` (callbacks e webhooks)
   - `blog` (web app do blog público — React + Vite + Material UI + MobX)
   - `admin-ui` (web app do painel de gerenciamento — React + Vite + Material UI + MobX)
 
@@ -33,6 +36,28 @@ services/[blog|admin-ui]/
 - DynamoDB tables.
 - Secrets Manager secrets por canal.
 - CloudWatch alarms (falha do state machine, erro de publish).
+
+## Estratégia de Linguagem para Lambdas
+**Decisão técnica**: usar linguagens diferentes conforme o tipo de Lambda:
+
+- **Node.js/TypeScript**: para Lambdas expostas via **API Gateway** (REST APIs).
+  - Exemplos: endpoints do Admin UI, webhooks, APIs de consulta.
+  - Motivo: melhor integração com frontend React, tipagem TypeScript, ecossistema npm.
+
+- **Python**: para Lambdas de **processamento** (não expostas via API Gateway).
+  - Exemplos: geradores de conteúdo (texto, roteiro, captions), publishers (YouTube, LinkedIn, etc.), indexação Google Search.
+  - Motivo: excelente suporte para processamento de texto, bibliotecas de IA (OpenAI, Anthropic), manipulação de dados, APIs de LLM.
+
+**Estrutura de serviços**:
+```
+services/
+├── generators/          # Python (processamento de texto/IA)
+├── publishers/          # Python (integrações com APIs externas)
+├── render/             # Python ou ECS (FFmpeg)
+└── api/                # Node.js/TypeScript (API Gateway)
+    ├── admin-api/      # Endpoints para Admin UI
+    └── webhooks/       # Webhooks e callbacks
+```
 
 ## Estrutura de domínios e URLs
 - **Site principal**: `https://zentriz.com.br/` (projeto existente em `/Users/mac/workspace/current/zentriz/zentriz-landpage/`).
@@ -117,7 +142,7 @@ services/[blog|admin-ui]/
 
 ```mermaid
 flowchart TD
-    Start[Início do Projeto] --> V0[v0 - Monolito Agendado<br/>Script único Python/Node<br/>CRON ou GitHub Actions]
+    Start[Início do Projeto] --> V0[v0 - Monolito Agendado<br/>Script único Python<br/>CRON ou GitHub Actions]
     
     V0 --> V1[v1 - Orquestração<br/>Step Functions + Lambdas<br/>Serverless Framework]
     
@@ -125,12 +150,24 @@ flowchart TD
     
     subgraph Infra["Infraestrutura AWS"]
         SF[Step Functions<br/>Orquestrador]
-        L[Lambda Functions<br/>Geradores e Publishers]
-        ECS[ECS Fargate<br/>Render de Vídeo]
+        
+        subgraph LambdasPython["Lambdas Python"]
+            LP1[Generators<br/>Geração de conteúdo]
+            LP2[Publishers<br/>YouTube, LinkedIn, etc]
+            LP3[Indexação<br/>Google Search Console]
+        end
+        
+        subgraph LambdasNode["Lambdas Node.js/TypeScript"]
+            LN1[Admin API<br/>API Gateway]
+            LN2[Webhooks<br/>Callbacks]
+        end
+        
+        ECS[ECS Fargate<br/>Render de Vídeo Python]
         S3[S3 Bucket<br/>Assets]
         DDB[DynamoDB<br/>Jobs e Posts]
         SM[Secrets Manager<br/>Credenciais]
         CW[CloudWatch<br/>Logs e Métricas]
+        APIGW[API Gateway<br/>REST APIs]
     end
     
     subgraph WebApps["Web Apps"]
@@ -141,24 +178,45 @@ flowchart TD
     subgraph CICD["CI/CD"]
         GH[GitHub<br/>Repositório]
         GA[GitHub Actions<br/>Build e Deploy]
-        AMP[AWS Amplify<br/>Deploy Automático]
+        SFW[Serverless Framework<br/>Deploy Lambdas Python]
+        AMP[AWS Amplify<br/>Deploy Web Apps]
     end
     
     V1 --> SF
-    SF --> L
+    SF --> LP1
+    SF --> LP2
+    SF --> LP3
     SF --> ECS
-    L --> S3
-    L --> DDB
-    L --> SM
-    L --> CW
+    
+    LP1 --> S3
+    LP1 --> DDB
+    LP2 --> S3
+    LP2 --> DDB
+    LP3 --> SM
+    ECS --> S3
+    
+    LP1 --> SM
+    LP2 --> SM
+    LP1 --> CW
+    LP2 --> CW
+    LP3 --> CW
     
     GH --> GA
+    GA --> SFW
     GA --> AMP
+    SFW --> LP1
+    SFW --> LP2
+    SFW --> LP3
+    SFW --> LN1
+    SFW --> LN2
+    SFW --> SF
     AMP --> Blog
     AMP --> Admin
     
-    Admin --> DDB
-    Admin --> L
+    Admin --> APIGW
+    APIGW --> LN1
+    LN1 --> DDB
+    LN1 --> SF
     
     style Start fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
     style V0 fill:#fff9c4,stroke:#f57c00,stroke-width:2px
@@ -166,4 +224,12 @@ flowchart TD
     style MVP fill:#c8e6c9,stroke:#388e3c,stroke-width:2px
     style Blog fill:#e1bee7,stroke:#7b1fa2,stroke-width:2px
     style Admin fill:#e1bee7,stroke:#7b1fa2,stroke-width:2px
+    style LP1 fill:#ffebee,stroke:#c62828,stroke-width:2px
+    style LP2 fill:#ffebee,stroke:#c62828,stroke-width:2px
+    style LP3 fill:#ffebee,stroke:#c62828,stroke-width:2px
+    style LN1 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style LN2 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style APIGW fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style SFW fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style GA fill:#fff3e0,stroke:#e65100,stroke-width:2px
 ```

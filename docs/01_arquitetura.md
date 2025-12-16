@@ -8,6 +8,8 @@ Construir um pipeline diário (ou sob demanda) que:
 - **EventBridge Scheduler**: dispara diariamente.
 - **Step Functions**: orquestra o pipeline com estados e retries.
 - **AWS Lambda**: etapas leves (texto, validações, postagem, indexação Google).
+  - **Python**: para processamento (geradores, publishers, indexação).
+  - **Node.js/TypeScript**: para APIs REST (API Gateway, endpoints Admin UI).
 - **ECS Fargate** (ou Lambda container) + **FFmpeg**: renderização de vídeo/cortes quando for pesado.
 - **S3**: armazenamento de assets (md/html, áudio, vídeo, cortes, thumbnails, legendas, sitemap.xml).
 - **DynamoDB**: tracking de jobs, estados, artefatos e URLs publicados.
