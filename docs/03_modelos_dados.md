@@ -64,24 +64,64 @@ Atributos:
 ## Diagrama de Modelos de Dados
 
 ```mermaid
-flowchart TB
-    subgraph DynamoDB["DynamoDB Tables"]
-        CJ[ContentJobs<br/>PK: TENANT#tenantId<br/>SK: JOB#jobId]
-        PP[PublishedPosts<br/>PK: TENANT#tenantId<br/>SK: POST#channel#postId]
-        EC[EditorialCalendar<br/>PK: TENANT#tenantId<br/>SK: CALITEM#runDate#calendarItemId]
-    end
+classDiagram
+    class ContentJobs {
+        +String PK
+        +String SK
+        +String jobId
+        +String tenantId
+        +String brandId
+        +String status
+        +DateTime createdAt
+        +DateTime updatedAt
+        +Date runDate
+        +Object topic
+        +Object assets
+        +Object checks
+        +Object approval
+        +Array errors
+        +Object providers
+        +Boolean platformComplianceChecked
+    }
     
-    subgraph S3["S3 Storage"]
-        S3A[S3 Assets<br/>jobs/jobId/research/<br/>jobs/jobId/blog/<br/>jobs/jobId/youtube/<br/>jobs/jobId/shorts/]
-    end
+    class PublishedPosts {
+        +String PK
+        +String SK
+        +String channel
+        +String jobId
+        +String assetKey
+        +String externalId
+        +String url
+        +String title
+        +String caption
+        +Array tags
+        +DateTime publishedAt
+        +Object metrics
+        +Object seoIndexing
+    }
     
-    EC -->|alimenta| CJ
-    CJ -->|gera| PP
-    CJ -->|armazena| S3A
-    PP -->|referencia| S3A
+    class EditorialCalendar {
+        +String PK
+        +String SK
+        +String calendarItemId
+        +String tenantId
+        +String brandId
+        +Date runDate
+        +String title
+        +String subjectDescription
+        +String aiPromptHint
+        +String status
+        +String createdBy
+        +DateTime createdAt
+    }
     
-    style CJ fill:#e3f2fd
-    style PP fill:#c8e6c9
-    style EC fill:#fff9c4
-    style S3A fill:#f3e5f5
+    class S3Assets {
+        +String bucket
+        +String key
+    }
+    
+    EditorialCalendar "1" --> "*" ContentJobs : alimenta
+    ContentJobs "1" --> "*" PublishedPosts : gera
+    ContentJobs "*" --> "1" S3Assets : armazena
+    PublishedPosts "*" --> "1" S3Assets : referencia
 ```
