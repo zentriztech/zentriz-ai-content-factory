@@ -60,3 +60,28 @@ Atributos:
 ## Idempotência
 - `publishKey = <channel>#<assetHash>`
 - antes de publicar, checar se já existe `PublishedPosts` com `publishKey`.
+
+## Diagrama de Modelos de Dados
+
+```mermaid
+flowchart TB
+    subgraph DynamoDB["DynamoDB Tables"]
+        CJ[ContentJobs<br/>PK: TENANT#tenantId<br/>SK: JOB#jobId]
+        PP[PublishedPosts<br/>PK: TENANT#tenantId<br/>SK: POST#channel#postId]
+        EC[EditorialCalendar<br/>PK: TENANT#tenantId<br/>SK: CALITEM#runDate#calendarItemId]
+    end
+    
+    subgraph S3["S3 Storage"]
+        S3A[S3 Assets<br/>jobs/jobId/research/<br/>jobs/jobId/blog/<br/>jobs/jobId/youtube/<br/>jobs/jobId/shorts/]
+    end
+    
+    EC -->|alimenta| CJ
+    CJ -->|gera| PP
+    CJ -->|armazena| S3A
+    PP -->|referencia| S3A
+    
+    style CJ fill:#e3f2fd
+    style PP fill:#c8e6c9
+    style EC fill:#fff9c4
+    style S3A fill:#f3e5f5
+```
