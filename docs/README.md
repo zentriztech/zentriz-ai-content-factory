@@ -109,6 +109,7 @@ cd zentriz-social-media-orchestrator
 - Mantém a estrutura de pastas consistente para facilitar o desenvolvimento
 
 # Estrutura esperada após o setup:
+```
 # ./docs/                    (esta documentação)
 # ./scripts/                 (scripts de setup e utilitários)
 #   ./repo-setup.sh          (clona todos os repositórios zsmo-*)
