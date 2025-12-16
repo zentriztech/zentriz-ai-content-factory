@@ -112,3 +112,58 @@ services/[blog|admin-ui]/
 - Render em ECS com task size fixo (ex.: 1–2 vCPU, 2–4GB) e tempo limite.
 - S3 lifecycle: limpar intermediários.
 - Step Functions: evitar loops longos; preferir batch por canal.
+
+## Diagrama de Deploy e Operação
+
+```mermaid
+flowchart TD
+    Start[Início do Projeto] --> V0[v0 - Monolito Agendado<br/>Script único Python/Node<br/>CRON ou GitHub Actions]
+    
+    V0 --> V1[v1 - Orquestração<br/>Step Functions + Lambdas<br/>Serverless Framework]
+    
+    V1 --> MVP[MVP+ - Admin UI<br/>React + Vite + MUI<br/>AWS Amplify]
+    
+    subgraph Infra["Infraestrutura AWS"]
+        SF[Step Functions<br/>Orquestrador]
+        L[Lambda Functions<br/>Geradores e Publishers]
+        ECS[ECS Fargate<br/>Render de Vídeo]
+        S3[S3 Bucket<br/>Assets]
+        DDB[DynamoDB<br/>Jobs e Posts]
+        SM[Secrets Manager<br/>Credenciais]
+        CW[CloudWatch<br/>Logs e Métricas]
+    end
+    
+    subgraph WebApps["Web Apps"]
+        Blog[Blog Público<br/>blog.zentriz.com.br<br/>AWS Amplify]
+        Admin[Admin UI<br/>blogeditor.zentriz.com.br<br/>AWS Amplify]
+    end
+    
+    subgraph CICD["CI/CD"]
+        GH[GitHub<br/>Repositório]
+        GA[GitHub Actions<br/>Build e Deploy]
+        AMP[AWS Amplify<br/>Deploy Automático]
+    end
+    
+    V1 --> SF
+    SF --> L
+    SF --> ECS
+    L --> S3
+    L --> DDB
+    L --> SM
+    L --> CW
+    
+    GH --> GA
+    GA --> AMP
+    AMP --> Blog
+    AMP --> Admin
+    
+    Admin --> DDB
+    Admin --> L
+    
+    style Start fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style V0 fill:#fff9c4,stroke:#f57c00,stroke-width:2px
+    style V1 fill:#c8e6c9,stroke:#388e3c,stroke-width:2px
+    style MVP fill:#c8e6c9,stroke:#388e3c,stroke-width:2px
+    style Blog fill:#e1bee7,stroke:#7b1fa2,stroke-width:2px
+    style Admin fill:#e1bee7,stroke:#7b1fa2,stroke-width:2px
+```
