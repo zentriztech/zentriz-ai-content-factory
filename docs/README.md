@@ -12,14 +12,14 @@ Este pacote descreve um **blueprint completo** (MVP → Escala) para uma ferrame
 - **LinkedIn**: trecho da matéria para promover o blog.
 
 ## Conteúdos deste ./docs
-- `01_arquitetura.md` — desenho AWS + componentes e fluxos.
-- `02_pipeline_conteudo.md` — passo a passo (daily run), estados e validações.
-- `03_modelos_dados.md` — tabelas/itens e estados no DynamoDB.
-- `04_integracoes_canais.md` — publicação por plataforma (APIs, tokens, limitações).
-- `05_prompts.md` — prompts base (matéria, roteiro, cortes, CTA, LinkedIn, X).
-- `06_seguranca_compliance.md` — tokens, segredos, guardrails, copyright, moderação.
-- `07_deploy_operacao.md` — deploy serverless, observabilidade, retries e custos.
-- `08_roadmap.md` — MVP → Fase 2/3 (IG, TikTok audit, etc.).
+- [`01_arquitetura.md`](./01_arquitetura.md) — desenho AWS + componentes e fluxos.
+- [`02_pipeline_conteudo.md`](./02_pipeline_conteudo.md) — passo a passo (daily run), estados e validações.
+- [`03_modelos_dados.md`](./03_modelos_dados.md) — tabelas/itens e estados no DynamoDB.
+- [`04_integracoes_canais.md`](./04_integracoes_canais.md) — publicação por plataforma (APIs, tokens, limitações).
+- [`05_prompts.md`](./05_prompts.md) — prompts base (matéria, roteiro, cortes, CTA, LinkedIn, X).
+- [`06_seguranca_compliance.md`](./06_seguranca_compliance.md) — tokens, segredos, guardrails, copyright, moderação.
+- [`07_deploy_operacao.md`](./07_deploy_operacao.md) — deploy serverless, observabilidade, retries e custos.
+- [`08_roadmap.md`](./08_roadmap.md) — MVP → Fase 2/3 (IG, TikTok audit, etc.).
 
 ## Decisões de stack e implementação
 - **Frontend web (todos os projetos)**: `React + Vite + Material UI` ([MUI](https://mui.com/material-ui/)).
