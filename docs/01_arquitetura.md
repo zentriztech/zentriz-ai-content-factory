@@ -117,54 +117,65 @@ Se você gerar conteúdo para mais de um canal/marca, trate como:
 ## Diagrama de Arquitetura de Componentes
 
 ```mermaid
-architecture-beta
-    group aws[AWS Cloud]
+C4Context
+    title System Context - Zentriz AI Content Factory
     
-    group web[Web Applications]
-        service blog(server)[Blog Público<br/>React + Vite + MUI]
-        service admin(server)[Admin UI<br/>React + Vite + MUI]
-    end
+    Person(editor, "Editor/Administrador", "Gerencia calendário editorial, aprova conteúdos gerados e monitora jobs.")
+    Person(visitor, "Visitante do Blog", "Acessa e lê matérias publicadas no blog.")
     
-    group orchestration[Orquestração]
-        service eventbridge(cloud)[EventBridge<br/>Scheduler]
-        service stepfunctions(server)[Step Functions<br/>Orchestrator]
-        service lambda(server)[Lambda<br/>Functions]
-        service ecs(server)[ECS Fargate<br/>Video Render]
-    end
+    Enterprise_Boundary(aws, "AWS Cloud") {
+        System_Boundary(webApps, "Web Applications") {
+            System(blog, "Blog Público", "Web app React + Vite + MUI<br/>Exibe matérias publicadas<br/>blog.zentriz.com.br")
+            System(adminUI, "Admin UI", "Web app React + Vite + MUI<br/>Painel de gerenciamento<br/>blogeditor.zentriz.com.br")
+        }
+        
+        System_Boundary(orchestration, "Orquestração") {
+            System(eventbridge, "EventBridge Scheduler", "Dispara jobs diários automaticamente")
+            System(stepfunctions, "Step Functions", "Orquestra o pipeline de geração de conteúdo")
+            System(lambda, "Lambda Functions", "Executa etapas leves: geração de texto, validações, publicação")
+            System(ecs, "ECS Fargate", "Renderização de vídeo e cortes usando FFmpeg")
+        }
+        
+        System_Boundary(storage, "Storage & Dados") {
+            SystemDb(s3, "S3", "Armazena assets: vídeos, áudios, imagens, markdown, sitemap.xml")
+            SystemDb(dynamodb, "DynamoDB", "Tracking de jobs, posts publicados e calendário editorial")
+            SystemDb(secrets, "Secrets Manager", "Armazena credenciais e tokens OAuth")
+        }
+        
+        System_Boundary(observability, "Observabilidade") {
+            System(cloudwatch, "CloudWatch", "Logs, métricas e alarmes do sistema")
+            System(sns, "SNS", "Notificações e alertas via Slack/Email")
+        }
+    }
     
-    group storage[Storage & Dados]
-        service s3(disk)[S3<br/>Assets]
-        service dynamodb(database)[DynamoDB<br/>Jobs & Posts]
-        service secrets(disk)[Secrets Manager<br/>Credentials]
-    end
+    System_Ext(google, "Google Search Console API", "Indexação automática de páginas do blog")
+    System_Ext(youtube, "YouTube API", "Upload e publicação de vídeos")
+    System_Ext(linkedin, "LinkedIn API", "Publicação de posts no LinkedIn")
+    System_Ext(social, "Redes Sociais APIs", "APIs do X, Instagram, TikTok para publicação de cortes")
+    System_Ext(llm, "APIs de IA", "OpenAI, Anthropic para geração de texto")
+    System_Ext(voice, "Voice Providers", "AWS Polly, ElevenLabs para síntese de voz")
     
-    group observability[Observabilidade]
-        service cloudwatch(cloud)[CloudWatch<br/>Logs & Metrics]
-        service sns(cloud)[SNS<br/>Notifications]
-    end
+    Rel(editor, adminUI, "Gerencia calendário e aprova conteúdos")
+    Rel(visitor, blog, "Lê matérias publicadas")
     
-    group integrations[Integrações Externas]
-        service google(cloud)[Google Search<br/>Console API]
-        service youtube(cloud)[YouTube API]
-        service linkedin(cloud)[LinkedIn API]
-        service social(cloud)[Redes Sociais<br/>X/IG/TikTok]
-    end
+    Rel(eventbridge, stepfunctions, "Dispara diariamente", "Schedule")
+    Rel(stepfunctions, lambda, "Orquestra execução")
+    Rel(stepfunctions, ecs, "Orquestra renderização")
+    Rel(lambda, dynamodb, "Lê/Escreve", "DynamoDB")
+    Rel(lambda, s3, "Lê/Escreve assets", "S3 API")
+    Rel(lambda, secrets, "Obtém credenciais", "Secrets API")
+    Rel(ecs, s3, "Salva vídeos renderizados", "S3 API")
+    Rel(lambda, cloudwatch, "Envia logs e métricas", "CloudWatch API")
+    Rel(lambda, sns, "Envia notificações", "SNS API")
+    Rel(lambda, google, "Submete URLs para indexação", "Indexing API")
+    Rel(lambda, youtube, "Publica vídeos", "YouTube Data API")
+    Rel(lambda, linkedin, "Publica posts", "LinkedIn API")
+    Rel(lambda, social, "Publica cortes", "Social Media APIs")
+    Rel(lambda, llm, "Gera conteúdo", "LLM APIs")
+    Rel(lambda, voice, "Gera narração", "TTS APIs")
     
-    eventbridge --> stepfunctions
-    stepfunctions --> lambda
-    stepfunctions --> ecs
-    lambda --> dynamodb
-    lambda --> s3
-    lambda --> secrets
-    ecs --> s3
-    lambda --> cloudwatch
-    lambda --> sns
-    lambda --> google
-    lambda --> youtube
-    lambda --> linkedin
-    lambda --> social
-    admin --> dynamodb
-    admin --> lambda
-    blog --> s3
-    sns --> admin
+    Rel(adminUI, dynamodb, "Consulta jobs e posts", "DynamoDB")
+    Rel(adminUI, lambda, "Aprova/Reprocessa", "API Gateway")
+    Rel(blog, s3, "Carrega conteúdo", "S3/CloudFront")
+    Rel(sns, editor, "Notifica aprovações", "Email/Slack")
 ```
