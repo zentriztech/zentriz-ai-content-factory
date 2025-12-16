@@ -120,3 +120,56 @@ Após publicação do blog, garantir indexação:
 **Automação**:
 - Lambda/Step Functions executa após publicação bem-sucedida do blog.
 - Se falhar, registrar em DynamoDB para retry posterior (cron diário).
+
+## Diagrama de Pipeline
+
+```mermaid
+flowchart TD
+    Start([EventBridge<br/>Dispara Diariamente]) --> Step1[Seleção de Tema<br/>Estado: TOPIC_SELECTED<br/>Fonte: Calendário Editorial ou Auto]
+    
+    Step1 --> Step2[Pesquisa e Notas<br/>Estado: RESEARCH_DONE<br/>Gera notas técnicas e claims]
+    
+    Step2 --> Step3[Gerar Matéria Blog<br/>Estado: BLOG_DRAFTED<br/>Markdown com estrutura padrão]
+    
+    Step3 --> Step4[Gerar Roteiro YouTube<br/>Estado: SCRIPT_DONE<br/>Timestamps e capítulos]
+    
+    Step4 --> Step5[Gerar Áudio Narração<br/>Estado: AUDIO_DONE<br/>TTS via Polly ou ElevenLabs]
+    
+    Step5 --> Step6[Render Vídeo Completo<br/>Estado: VIDEO_RENDERED<br/>FFmpeg em ECS Fargate]
+    
+    Step6 --> Step7[Gerar Cortes 9:16<br/>Estado: SHORTS_RENDERED<br/>Cortes para IG/TikTok/X]
+    
+    Step7 --> Decision{Aprovação<br/>Humana?}
+    
+    Decision -->|Sim| Step8[Aguardar Aprovação<br/>Estado: AWAITING_APPROVAL<br/>Preview gerado + Notificação]
+    Decision -->|Não| Step9[Publicar por Canal<br/>Estado: PUBLISHING]
+    
+    Step8 --> Admin[Admin UI<br/>Revisar conteúdo completo]
+    Admin -->|Aprovado| Step9
+    Admin -->|Rejeitado| Error[NEEDS_ATTENTION]
+    
+    Step9 --> Step10[Publicar Blog<br/>Commit GitHub + Amplify rebuild]
+    Step10 --> Step11[Publicar YouTube<br/>Vídeo completo unlisted]
+    Step11 --> Step12[Publicar LinkedIn<br/>Trecho + link blog]
+    Step12 --> Step13[Publicar Redes Sociais<br/>Cortes IG/TikTok/X]
+    
+    Step13 --> Step14[Indexar Google Search<br/>Submeter URL + Sitemap<br/>Estado: PUBLISHED]
+    
+    Step14 --> Step15[Pós-Publicação<br/>Registrar métricas<br/>Coletar views/likes]
+    
+    Step1 -.->|Erro| Error
+    Step2 -.->|Erro| Error
+    Step3 -.->|Erro| Error
+    Step4 -.->|Erro| Error
+    Step5 -.->|Erro| Error
+    Step6 -.->|Erro| Error
+    Step7 -.->|Erro| Error
+    Step9 -.->|Erro| Error
+    
+    style Start fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style Step15 fill:#c8e6c9,stroke:#388e3c,stroke-width:2px
+    style Error fill:#ffcdd2,stroke:#d32f2f,stroke-width:2px
+    style Decision fill:#fff9c4,stroke:#f57c00,stroke-width:2px
+    style Step8 fill:#fff9c4,stroke:#f57c00,stroke-width:2px
+    style Admin fill:#e1bee7,stroke:#7b1fa2,stroke-width:2px
+```
