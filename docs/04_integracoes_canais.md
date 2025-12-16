@@ -62,9 +62,52 @@
 - Rotacionar e auditar acessos.
 - Nunca salvar refresh tokens em texto plano fora de Secrets Manager.
 
-## Modo “Publicação Híbrida” (recomendado)
-- Ferramenta gera tudo e cria “pacote do dia”:
+## Modo "Publicação Híbrida" (recomendado)
+- Ferramenta gera tudo e cria "pacote do dia":
   - links dos assets no S3/CloudFront
   - captions prontas
   - títulos e hashtags
 - Você decide: autopost (onde permitido) ou 1 clique de aprovação.
+
+## Diagrama de Integrações por Canal
+
+```mermaid
+flowchart TD
+    Pipeline[Pipeline de Publicação<br/>Step Functions + Lambda]
+    
+    subgraph Auto["Publicação Automática"]
+        Blog[Blog<br/>blog.zentriz.com.br<br/>Commit GitHub + Amplify]
+        YouTube[YouTube<br/>API OAuth<br/>Upload vídeo completo]
+        LinkedIn[LinkedIn<br/>API<br/>Post texto + link]
+        X[X Twitter<br/>API v2<br/>Teaser + link]
+    end
+    
+    subgraph Manual["Publicação Manual MVP"]
+        Instagram[Instagram Reels<br/>Graph API<br/>Cortes 9:16]
+        TikTok[TikTok<br/>Content Posting API<br/>Cortes 9:16]
+        Kwai[Kwai<br/>Avaliar API<br/>Cortes 9:16]
+    end
+    
+    subgraph SEO["SEO e Indexação"]
+        Google[Google Search Console<br/>Indexing API v3<br/>Sitemap + Submissão]
+    end
+    
+    Pipeline --> Blog
+    Pipeline --> YouTube
+    Pipeline --> LinkedIn
+    Pipeline --> X
+    Pipeline -.->|MVP Manual| Instagram
+    Pipeline -.->|MVP Manual| TikTok
+    Pipeline -.->|MVP Manual| Kwai
+    Blog --> Google
+    
+    style Pipeline fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style Blog fill:#c8e6c9,stroke:#388e3c,stroke-width:2px
+    style YouTube fill:#c8e6c9,stroke:#388e3c,stroke-width:2px
+    style LinkedIn fill:#c8e6c9,stroke:#388e3c,stroke-width:2px
+    style X fill:#c8e6c9,stroke:#388e3c,stroke-width:2px
+    style Instagram fill:#fff9c4,stroke:#f57c00,stroke-width:2px
+    style TikTok fill:#fff9c4,stroke:#f57c00,stroke-width:2px
+    style Kwai fill:#fff9c4,stroke:#f57c00,stroke-width:2px
+    style Google fill:#e1bee7,stroke:#7b1fa2,stroke-width:2px
+```
